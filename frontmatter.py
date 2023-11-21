@@ -18,10 +18,14 @@ class Frontmatter:
         content = Frontmatter._read_file_content(file_path)
         match, matched_content = Frontmatter._get_frontmatter_matches(pattern, content)
 
-        if match and property_name in matched_content:
+        if not match:
+            return
+
+        if property_name in matched_content:
             return
 
         updated_content = content.replace(match.group(1), match.group(1).strip() + f'\n{property_name}:\n  - \n')
+        print(f"Modifying file: {os.path.basename(file_path)}")
         Frontmatter._write_file_content(file_path, updated_content)
 
     @staticmethod
@@ -46,6 +50,7 @@ class Frontmatter:
         if match_result:
             # Remove the matched group from matched_content
             updated_content = content.replace(match.group(1), matched_content.replace(match_result.group(1), ''))
+            print(f"Modifying file: {os.path.basename(file_path)}")
             Frontmatter._write_file_content(file_path, updated_content)
 
     @staticmethod
@@ -62,7 +67,10 @@ class Frontmatter:
         content = Frontmatter._read_file_content(file_path)
         match, matched_content = Frontmatter._get_frontmatter_matches(pattern, content)
 
-        if match and old_property_name not in matched_content:
+        if not match:
+            return
+            
+        if old_property_name not in matched_content:
             return
         
         if new_property_name in matched_content:
@@ -70,6 +78,7 @@ class Frontmatter:
             return
 
         updated_content = content.replace(match.group(1), matched_content.replace(f'{old_property_name}:', f'{new_property_name}:'))
+        print(f"Modifying file: {os.path.basename(file_path)}")
         Frontmatter._write_file_content(file_path, updated_content)
 
     @staticmethod
@@ -140,21 +149,21 @@ class Frontmatter:
 
 
 def main():
-    # 创建解析器并定义命令行参数
+    # Create a parser and define command-line arguments
     parser = argparse.ArgumentParser(description='Add property to YAML')
     parser.add_argument('-d', '--directory', type=str, help='Directory path')
     parser.add_argument('-p', '--property', type=str, nargs='+', help='Property name')
     parser.add_argument('-m', '--mode', type=str, help='Action type')
 
-    # 解析命令行参数
+    # Parse the command-line arguments
     args = parser.parse_args()
 
-    # 检查必要的参数是否提供
+    # Check if the required arguments are provided
     if not args.directory or not args.property:
         parser.print_help()
         sys.exit(1)
 
-    # 处理指定目录及其子目录下的所有文件
+    # Process all files in the specified directory and its subdirectories
     Frontmatter.process_files(args.directory, args.mode, *args.property)
 
 if __name__ == '__main__':
